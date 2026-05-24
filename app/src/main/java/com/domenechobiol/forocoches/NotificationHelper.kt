@@ -35,6 +35,7 @@ object NotificationHelper {
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(text)
+            .setNumber(badgeCount)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()

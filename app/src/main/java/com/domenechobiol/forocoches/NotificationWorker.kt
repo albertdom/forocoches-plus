@@ -56,7 +56,8 @@ class NotificationWorker(
                 applicationContext,
                 NotificationHelper.ID_PM,
                 "FC+ Mensajes Privados",
-                "Tienes $diff nuevo${if (diff == 1) "" else "s"} mensaje${if (diff == 1) "" else "s"} privado${if (diff == 1) "" else "s"}"
+                "Tienes $diff nuevo${if (diff == 1) "" else "s"} mensaje${if (diff == 1) "" else "s"} privado${if (diff == 1) "" else "s"}",
+                pmCount
             )
         }
         repo.setLastPmCount(pmCount)
@@ -67,7 +68,8 @@ class NotificationWorker(
                 applicationContext,
                 NotificationHelper.ID_NOTIF,
                 "FC+ Notificaciones",
-                "Tienes $diff nueva${if (diff == 1) "" else "s"} notificación${if (diff == 1) "" else "es"}"
+                "Tienes $diff nueva${if (diff == 1) "" else "s"} notificación${if (diff == 1) "" else "es"}",
+                notifCount
             )
         }
         repo.setLastNotifCount(notifCount)
@@ -89,7 +91,8 @@ class NotificationWorker(
                     applicationContext,
                     NotificationHelper.ID_FAVORITE_BASE + index,
                     "FC+ Nuevo hilo",
-                    "@$username ha subido un hilo nuevo"
+                    "@$username ha subido un hilo nuevo",
+                    1
                 )
             }
             if (lastSeen == null || latestThreadId != lastSeen) {
