@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -18,6 +19,7 @@ import kotlin.math.abs
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var repo: IgnoreListRepository
 
     private var touchDownX = 0f
@@ -27,8 +29,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        swipeRefresh = findViewById(R.id.swipe_refresh)
         webView = findViewById(R.id.webview)
         configureWebView()
+        configureSwipeRefresh()
         webView.loadUrl("https://forocoches.com/foro/")
         fetchIgnoreListIfNeeded()
         requestNotificationPermission()
@@ -50,9 +54,18 @@ class MainActivity : AppCompatActivity() {
             setAcceptThirdPartyCookies(webView, true)
         }
         repo = IgnoreListRepository(this)
-        webView.webViewClient = ForocochesWebViewClient(this, repo)
         val notifRepo = NotificationRepository(this)
-        webView.addJavascriptInterface(SettingsBridge(repo, notifRepo, webView), "Android")
+        val keywordRepo = KeywordRepository(this)
+        webView.webViewClient = ForocochesWebViewClient(this, repo, keywordRepo) {
+            swipeRefresh.isRefreshing = false
+        }
+        webView.addJavascriptInterface(SettingsBridge(repo, notifRepo, keywordRepo, webView), "Android")
+    }
+
+    private fun configureSwipeRefresh() {
+        swipeRefresh.setColorSchemeColors(android.graphics.Color.parseColor("#00e5cc"))
+        swipeRefresh.setOnChildScrollUpCallback { _, _ -> webView.canScrollVertically(-1) }
+        swipeRefresh.setOnRefreshListener { webView.reload() }
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
@@ -106,7 +119,8 @@ class MainActivity : AppCompatActivity() {
                                 this@MainActivity,
                                 NotificationHelper.ID_PM,
                                 "FC+ Mensajes Privados",
-                                "Tienes $diff nuevo${if (diff == 1) "" else "s"} mensaje${if (diff == 1) "" else "s"} privado${if (diff == 1) "" else "s"}"
+                                "Tienes $diff nuevo${if (diff == 1) "" else "s"} mensaje${if (diff == 1) "" else "s"} privado${if (diff == 1) "" else "s"}",
+                                pmCount
                             )
                         }
                         notifRepo.setLastPmCount(pmCount)
@@ -118,7 +132,8 @@ class MainActivity : AppCompatActivity() {
                                 this@MainActivity,
                                 NotificationHelper.ID_NOTIF,
                                 "FC+ Notificaciones",
-                                "Tienes $diff nueva${if (diff == 1) "" else "s"} notificación${if (diff == 1) "" else "es"}"
+                                "Tienes $diff nueva${if (diff == 1) "" else "s"} notificación${if (diff == 1) "" else "es"}",
+                                notifCount
                             )
                         }
                         notifRepo.setLastNotifCount(notifCount)

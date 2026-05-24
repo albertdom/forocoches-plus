@@ -8,7 +8,9 @@ import android.webkit.WebViewClient
 
 class ForocochesWebViewClient(
     private val context: Context,
-    private val repo: IgnoreListRepository
+    private val repo: IgnoreListRepository,
+    private val keywordRepo: KeywordRepository,
+    private val onPageLoad: (() -> Unit)? = null
 ) : WebViewClient() {
 
     private val contentJs: String by lazy {
@@ -35,15 +37,11 @@ class ForocochesWebViewClient(
 
     override fun onPageFinished(view: WebView, url: String) {
         injectCss(view, adblockCss)
-        injectIgnoredUsersGlobals(view)
+        injectGlobals(view)
         view.evaluateJavascript(contentJs, null)
-        if (isProfilePage(url)) {
-            view.evaluateJavascript(settingsPanelJs, null)
-        }
+        view.evaluateJavascript(settingsPanelJs, null)
+        onPageLoad?.invoke()
     }
-
-    private fun isProfilePage(url: String): Boolean =
-        (url.contains("profile.php") || url.contains("member.php")) && !url.contains("do=ignorelist")
 
     private fun injectCss(view: WebView, css: String) {
         val escaped = css
@@ -57,12 +55,18 @@ class ForocochesWebViewClient(
         )
     }
 
-    private fun injectIgnoredUsersGlobals(view: WebView) {
+    private fun injectGlobals(view: WebView) {
         val users = repo.getIgnoredUsers()
         val usersJson = users.joinToString(",") { "\"${it.replace("\"", "\\\"")}\"" }
         val hideMode = repo.getHideMode()
+
+        val keywordsEnabled = keywordRepo.isEnabled()
+        val keywords = keywordRepo.getKeywords()
+        val keywordsJson = keywords.joinToString(",") { "\"${it.replace("\"", "\\\"")}\"" }
+
         view.evaluateJavascript(
-            """window._fcIgnoredUsers=[$usersJson];window._fcHideMode="$hideMode";""",
+            """window._fcIgnoredUsers=[$usersJson];window._fcHideMode="$hideMode";""" +
+            """window._fcKeywordsEnabled=$keywordsEnabled;window._fcKeywords=[$keywordsJson];""",
             null
         )
     }
