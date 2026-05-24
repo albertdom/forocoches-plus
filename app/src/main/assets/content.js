@@ -1,7 +1,9 @@
 (function () {
-  const ignoredSet = new Set(window._fcIgnoredUsers || []);
-  const keywordsEnabled = window._fcKeywordsEnabled !== false;
-  const keywords = (window._fcKeywords || []).map(k => k.toLowerCase());
+  if (typeof Android === 'undefined') return;
+
+  const ignoredSet = new Set(JSON.parse(Android.getIgnoredUsersJson()));
+  const keywordsEnabled = Android.getKeywordFilterEnabled();
+  const keywords = JSON.parse(Android.getKeywordsJson()).map(k => k.toLowerCase());
 
   function isThreadPage() { return window.location.href.includes('showthread.php'); }
 
