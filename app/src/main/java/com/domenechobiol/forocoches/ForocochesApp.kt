@@ -9,12 +9,16 @@ import java.util.concurrent.TimeUnit
 class ForocochesApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        val request = PeriodicWorkRequestBuilder<IgnoreListWorker>(30, TimeUnit.MINUTES)
-            .build()
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "ignore-list-refresh",
-            ExistingPeriodicWorkPolicy.KEEP,
-            request
-        )
+        try {
+            val request = PeriodicWorkRequestBuilder<IgnoreListWorker>(30, TimeUnit.MINUTES)
+                .build()
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "ignore-list-refresh",
+                ExistingPeriodicWorkPolicy.KEEP,
+                request
+            )
+        } catch (_: IllegalStateException) {
+            // WorkManager not initialized (e.g., in tests)
+        }
     }
 }
