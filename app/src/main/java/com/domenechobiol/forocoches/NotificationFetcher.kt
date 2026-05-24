@@ -52,8 +52,12 @@ class NotificationFetcher {
         conn.setRequestProperty("User-Agent", USER_AGENT)
         conn.connectTimeout = 10_000
         conn.readTimeout = 10_000
-        val html = conn.inputStream.bufferedReader().readText()
-        conn.disconnect()
-        return html
+        val code = conn.responseCode
+        if (code !in 200..299) throw java.io.IOException("HTTP $code for $url")
+        return try {
+            conn.inputStream.bufferedReader().readText()
+        } finally {
+            conn.disconnect()
+        }
     }
 }
