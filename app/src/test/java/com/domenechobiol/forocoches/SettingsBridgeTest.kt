@@ -1,6 +1,7 @@
 package com.domenechobiol.forocoches
 
 import android.content.Context
+import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -20,7 +21,8 @@ class SettingsBridgeTest {
     fun setUp() {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
         repo = IgnoreListRepository(ctx)
-        bridge = SettingsBridge(repo)
+        val webView = WebView(ctx)
+        bridge = SettingsBridge(repo, webView)
     }
 
     @Test
