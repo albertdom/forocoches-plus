@@ -4,14 +4,18 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.webkit.CookieManager
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.GestureDetectorCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,6 +28,7 @@ class MainActivity : AppCompatActivity() {
 
         webView = findViewById(R.id.webview)
         configureWebView()
+        setupSwipeNavigation()
         webView.loadUrl("https://forocoches.com/foro/")
         fetchIgnoreListIfNeeded()
         requestNotificationPermission()
@@ -61,6 +66,27 @@ class MainActivity : AppCompatActivity() {
                 val users = IgnoreListFetcher().fetch(cookie)
                 if (users.isNotEmpty()) repo.setIgnoredUsers(users)
             } catch (_: Exception) { }
+        }
+    }
+
+    private fun setupSwipeNavigation() {
+        val gestureDetector = GestureDetectorCompat(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+                e1 ?: return false
+                val diffX = e2.x - e1.x
+                val diffY = e2.y - e1.y
+                if (abs(diffX) < abs(diffY) * 1.5f) return false
+                if (abs(diffX) < 80f || abs(velocityX) < 200f) return false
+                return if (diffX > 0) {
+                    if (webView.canGoBack()) { webView.goBack(); true } else false
+                } else {
+                    if (webView.canGoForward()) { webView.goForward(); true } else false
+                }
+            }
+        })
+        webView.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            false
         }
     }
 
