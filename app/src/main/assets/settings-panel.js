@@ -5,17 +5,19 @@
   var hideMode = Android.getHideMode();
   var ignoredUsers = JSON.parse(Android.getIgnoredUsersJson());
   var lastUpdated = Android.getLastUpdatedMs();
+  var favUsers = JSON.parse(Android.getFavoriteUsersJson());
+  var kwEnabled = Android.getKeywordFilterEnabled();
+  var keywords = JSON.parse(Android.getKeywordsJson());
 
   function timeAgo(ms) {
     if (!ms) return 'nunca';
     var diff = Date.now() - ms;
     var minutes = Math.floor(diff / 60000);
     var hours = Math.floor(diff / 3600000);
-    if (minutes < 1) return 'hace menos de 1 minuto';
-    if (minutes === 1) return 'hace 1 minuto';
-    if (hours < 1) return 'hace ' + minutes + ' minutos';
-    if (hours === 1) return 'hace 1 hora';
-    return 'hace ' + hours + ' horas';
+    if (minutes < 1) return 'hace <1 min';
+    if (hours < 1) return 'hace ' + minutes + ' min';
+    if (hours === 1) return 'hace 1 h';
+    return 'hace ' + hours + ' h';
   }
 
   function escAttr(s) {
@@ -28,39 +30,39 @@
 
   function buildUserRows(users) {
     if (users.length === 0)
-      return '<div style="color:#666;font-size:12px;padding:4px 0;">No hay usuarios ignorados</div>';
+      return '<div style="color:#555;font-size:12px;padding:6px 0;">Sin usuarios ignorados</div>';
     return users.map(function(u) {
       return '<div style="display:flex;justify-content:space-between;align-items:center;' +
-             'padding:6px 0;border-bottom:1px solid #2a2a2a;" data-user="' + escAttr(u) + '">' +
-             '<span style="color:#ccc;">@' + escAttr(u) + '</span>' +
+             'padding:5px 0;border-bottom:1px solid #222;" data-user="' + escAttr(u) + '">' +
+             '<span style="color:#bbb;font-size:13px;">@' + escAttr(u) + '</span>' +
              '<button onclick="fcRemoveUser(\'' + escJs(u) + '\')" style="' +
-             'background:none;border:none;color:#ff5555;cursor:pointer;font-size:13px;padding:2px 8px;">✕</button>' +
+             'background:none;border:none;color:#ff5555;cursor:pointer;font-size:13px;padding:2px 6px;">✕</button>' +
              '</div>';
     }).join('');
   }
 
   function buildFavoriteRows(favs) {
     if (favs.length === 0)
-      return '<div style="color:#666;font-size:12px;padding:4px 0;">No hay usuarios favoritos</div>';
+      return '<div style="color:#555;font-size:12px;padding:6px 0;">Sin usuarios favoritos</div>';
     return favs.map(function(f) {
       return '<div style="display:flex;justify-content:space-between;align-items:center;' +
-             'padding:6px 0;border-bottom:1px solid #2a2a2a;">' +
-             '<span style="color:#ccc;">@' + escAttr(f.username) + '</span>' +
+             'padding:5px 0;border-bottom:1px solid #222;">' +
+             '<span style="color:#bbb;font-size:13px;">@' + escAttr(f.username) + '</span>' +
              '<button onclick="fcRemoveFavorite(\'' + escJs(f.username) + '\')" style="' +
-             'background:none;border:none;color:#ff5555;cursor:pointer;font-size:13px;padding:2px 8px;">✕</button>' +
+             'background:none;border:none;color:#ff5555;cursor:pointer;font-size:13px;padding:2px 6px;">✕</button>' +
              '</div>';
     }).join('');
   }
 
-  function buildKeywordRows(keywords) {
-    if (keywords.length === 0)
-      return '<div style="color:#666;font-size:12px;padding:4px 0;">No hay palabras clave</div>';
-    return keywords.map(function(k) {
+  function buildKeywordRows(kws) {
+    if (kws.length === 0)
+      return '<div style="color:#555;font-size:12px;padding:6px 0;">Sin palabras clave</div>';
+    return kws.map(function(k) {
       return '<div style="display:flex;justify-content:space-between;align-items:center;' +
-             'padding:4px 0;border-bottom:1px solid #2a2a2a;">' +
-             '<span style="color:#ccc;font-size:13px;">' + escAttr(k) + '</span>' +
+             'padding:4px 0;border-bottom:1px solid #222;">' +
+             '<span style="color:#bbb;font-size:12px;">' + escAttr(k) + '</span>' +
              '<button onclick="fcRemoveKeyword(\'' + escJs(k) + '\')" style="' +
-             'background:none;border:none;color:#ff5555;cursor:pointer;font-size:13px;padding:2px 8px;">✕</button>' +
+             'background:none;border:none;color:#ff5555;cursor:pointer;font-size:13px;padding:2px 6px;">✕</button>' +
              '</div>';
     }).join('');
   }
@@ -75,139 +77,156 @@
     return { userId: userId, username: username };
   }
 
-  var isChecked = hideMode === 'complete';
-  var sliderBg = isChecked ? '#00e5cc' : '#555';
-  var thumbLeft = isChecked ? '21px' : '3px';
+  function toggle(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
 
-  // Overlay backdrop
+  function rowStyle() {
+    return 'display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #222;';
+  }
+
+  function manageBtn(sectionId) {
+    return '<button onclick="fcToggleSection(\'' + sectionId + '\')" style="' +
+           'background:none;border:1px solid #444;color:#888;border-radius:4px;' +
+           'padding:2px 8px;font-size:11px;cursor:pointer;">Gestionar</button>';
+  }
+
+  function toggleSwitch(inputId, trackId, thumbId, checked) {
+    var bg = checked ? '#00e5cc' : '#555';
+    var left = checked ? '21px' : '3px';
+    return '<label style="position:relative;width:40px;height:22px;flex-shrink:0;cursor:pointer;">' +
+           '<input type="checkbox" id="' + inputId + '" ' + (checked ? 'checked' : '') +
+           ' style="opacity:0;width:0;height:0;position:absolute;">' +
+           '<span id="' + trackId + '" style="position:absolute;inset:0;background:' + bg +
+           ';border-radius:22px;transition:background 0.2s;">' +
+           '<span id="' + thumbId + '" style="position:absolute;width:16px;height:16px;left:' + left +
+           ';bottom:3px;background:#fff;border-radius:50%;transition:left 0.2s;"></span>' +
+           '</span></label>';
+  }
+
+  var isChecked = hideMode === 'complete';
+  var profileInfo = getCurrentProfileInfo();
+
+  // Overlay
   var overlay = document.createElement('div');
   overlay.id = 'fc-settings-overlay';
   overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.5);';
-  overlay.addEventListener('click', function(e) {
-    if (e.target === overlay) closePanel();
-  });
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closePanel(); });
 
-  // Settings panel (drops from header)
+  // Panel
   var panel = document.createElement('div');
   panel.id = 'fc-settings-panel';
   panel.style.cssText = 'display:none;position:fixed;top:var(--header-height,56px);left:0;right:0;' +
-    'z-index:9999;background:#1a1a1a;border-bottom:2px solid #333;padding:16px;' +
+    'z-index:9999;background:#1a1a1a;border-bottom:2px solid #2a2a2a;padding:0 16px;' +
     'font-family:sans-serif;font-size:14px;color:#e0e0e0;max-height:80vh;overflow-y:auto;';
 
-  panel.innerHTML =
-    '<div style="font-weight:bold;font-size:15px;margin-bottom:14px;color:#00e5cc;">⚙ FC+ Configuración</div>' +
-
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
-    '<span>Ocultar hilos completamente</span>' +
-    '<label style="position:relative;width:40px;height:22px;flex-shrink:0;cursor:pointer;">' +
-    '<input type="checkbox" id="fc-hide-toggle" ' + (isChecked ? 'checked' : '') +
-    ' style="opacity:0;width:0;height:0;position:absolute;">' +
-    '<span id="fc-toggle-track" style="position:absolute;inset:0;background:' + sliderBg +
-    ';border-radius:22px;transition:background 0.2s;">' +
-    '<span id="fc-toggle-thumb" style="position:absolute;width:16px;height:16px;left:' + thumbLeft +
-    ';bottom:3px;background:#fff;border-radius:50%;transition:left 0.2s;"></span>' +
-    '</span></label>' +
-    '</div>' +
-
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
-    '<span style="color:#888;font-size:12px;" id="fc-meta">Actualizado: ' + timeAgo(lastUpdated) + ' · ' + ignoredUsers.length + ' ignorados</span>' +
-    '<button id="fc-refresh-btn" onclick="fcRefresh()" style="background:none;border:1px solid #00e5cc;color:#00e5cc;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">↻ Actualizar</button>' +
-    '</div>' +
-
-    '<div id="fc-ignored-list" style="max-height:220px;overflow-y:auto;">' +
-    buildUserRows(ignoredUsers) +
+  // — Fila: ocultar completamente
+  var hiddenRow =
+    '<div style="' + rowStyle() + '">' +
+    '<span style="color:#ccc;">Ocultar hilos completamente</span>' +
+    toggleSwitch('fc-hide-toggle', 'fc-toggle-track', 'fc-toggle-thumb', isChecked) +
     '</div>';
 
-  var favUsers = JSON.parse(Android.getFavoriteUsersJson());
-  var profileInfo = getCurrentProfileInfo();
-  var addFavBtn = profileInfo
+  // — Fila: ignorados
+  var ignoredRow =
+    '<div style="' + rowStyle() + '">' +
+    '<span style="color:#888;font-size:13px;">Ignorados' +
+    '<span id="fc-ignored-count" style="color:#555;margin-left:6px;">' + ignoredUsers.length + '</span></span>' +
+    '<div style="display:flex;gap:6px;align-items:center;">' +
+    '<button id="fc-refresh-btn" onclick="fcRefresh()" style="background:none;border:none;color:#555;cursor:pointer;font-size:14px;padding:2px;">↻</button>' +
+    manageBtn('fc-ignored-section') +
+    '</div></div>' +
+    '<div id="fc-ignored-section" style="display:none;padding-bottom:8px;">' +
+    '<div id="fc-ignored-list">' + buildUserRows(ignoredUsers) + '</div>' +
+    '<div style="color:#444;font-size:10px;margin-top:6px;">Lista sync: ' + timeAgo(lastUpdated) + '</div>' +
+    '</div>';
+
+  // — Fila: favoritos
+  var addFavInner = profileInfo
     ? '<button id="fc-add-fav-btn" onclick="fcAddCurrentFavorite()" style="' +
-      'width:100%;margin-top:8px;background:none;border:1px solid #00e5cc;color:#00e5cc;' +
+      'width:100%;margin-top:6px;background:none;border:1px solid #444;color:#888;' +
       'border-radius:4px;padding:4px;font-size:12px;cursor:pointer;">' +
-      '★ Añadir @' + escAttr(profileInfo.username) + ' a favoritos</button>'
+      '★ Añadir @' + escAttr(profileInfo.username) + '</button>'
     : '';
-
-  var kwEnabled = Android.getKeywordFilterEnabled();
-  var keywords = JSON.parse(Android.getKeywordsJson());
-  var kwSliderBg = kwEnabled ? '#00e5cc' : '#555';
-  var kwThumbLeft = kwEnabled ? '21px' : '3px';
-
-  panel.innerHTML +=
-    '<div style="border-top:1px solid #333;margin-top:12px;padding-top:12px;">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-    '<span style="font-size:12px;color:#888;">Filtro político <span style="font-size:10px;">(oculta hilos por palabras)</span></span>' +
-    '<label style="position:relative;width:40px;height:22px;flex-shrink:0;cursor:pointer;">' +
-    '<input type="checkbox" id="fc-kw-toggle" ' + (kwEnabled ? 'checked' : '') +
-    ' style="opacity:0;width:0;height:0;position:absolute;">' +
-    '<span id="fc-kw-track" style="position:absolute;inset:0;background:' + kwSliderBg +
-    ';border-radius:22px;transition:background 0.2s;">' +
-    '<span id="fc-kw-thumb" style="position:absolute;width:16px;height:16px;left:' + kwThumbLeft +
-    ';bottom:3px;background:#fff;border-radius:50%;transition:left 0.2s;"></span>' +
-    '</span></label>' +
+  var favRow =
+    '<div style="' + rowStyle() + '">' +
+    '<span style="color:#888;font-size:13px;">Favoritos' +
+    '<span id="fc-fav-count" style="color:#555;margin-left:6px;">' + favUsers.length + '</span></span>' +
+    manageBtn('fc-fav-section') +
     '</div>' +
-    '<div id="fc-kw-list" style="max-height:150px;overflow-y:auto;">' + buildKeywordRows(keywords) + '</div>' +
-    '<div style="display:flex;gap:4px;margin-top:8px;">' +
+    '<div id="fc-fav-section" style="display:none;padding-bottom:8px;">' +
+    '<div id="fc-fav-list">' + buildFavoriteRows(favUsers) + '</div>' +
+    addFavInner +
+    '</div>';
+
+  // — Fila: filtro político
+  var kwRow =
+    '<div style="' + rowStyle() + '">' +
+    '<span style="color:#888;font-size:13px;">Filtro político' +
+    '<span id="fc-kw-count" style="color:#555;margin-left:6px;">' + keywords.length + ' palabras</span></span>' +
+    '<div style="display:flex;gap:8px;align-items:center;">' +
+    toggleSwitch('fc-kw-toggle', 'fc-kw-track', 'fc-kw-thumb', kwEnabled) +
+    manageBtn('fc-kw-section') +
+    '</div></div>' +
+    '<div id="fc-kw-section" style="display:none;padding-bottom:8px;">' +
+    '<div id="fc-kw-list" style="max-height:140px;overflow-y:auto;">' + buildKeywordRows(keywords) + '</div>' +
+    '<div style="display:flex;gap:4px;margin-top:6px;">' +
     '<input id="fc-kw-input" type="text" placeholder="Añadir palabra..." style="' +
-    'flex:1;background:#2a2a2a;border:1px solid #444;color:#e0e0e0;border-radius:4px;padding:4px 8px;font-size:12px;">' +
+    'flex:1;background:#222;border:1px solid #333;color:#e0e0e0;border-radius:4px;padding:4px 8px;font-size:12px;">' +
     '<button onclick="fcAddKeyword()" style="background:none;border:1px solid #00e5cc;color:#00e5cc;' +
     'border-radius:4px;padding:2px 10px;font-size:13px;cursor:pointer;">+</button>' +
     '</div>' +
-    '<button onclick="fcResetKeywords()" style="width:100%;margin-top:6px;background:none;border:1px solid #555;' +
-    'color:#888;border-radius:4px;padding:3px;font-size:11px;cursor:pointer;">↺ Restablecer predeterminados</button>' +
+    '<button onclick="fcResetKeywords()" style="width:100%;margin-top:5px;background:none;border:1px solid #2a2a2a;' +
+    'color:#555;border-radius:4px;padding:3px;font-size:11px;cursor:pointer;">↺ Restablecer predeterminados</button>' +
     '</div>';
 
-  panel.innerHTML +=
-    '<div style="border-top:1px solid #333;margin-top:12px;padding-top:12px;">' +
-    '<div style="font-size:12px;color:#888;margin-bottom:8px;">🧪 Debug</div>' +
-    '<button onclick="fcTestNotifications()" style="width:100%;background:none;border:1px solid #888;color:#888;border-radius:4px;padding:4px;font-size:12px;cursor:pointer;" id="fc-test-btn">Simular notificación (resetea contadores + lanza worker)</button>' +
-    '</div>' +
-    '<div style="border-top:1px solid #333;margin-top:12px;padding-top:12px;">' +
-    '<div style="font-size:12px;color:#888;margin-bottom:8px;">Usuarios favoritos <span style="font-size:10px;">(avisa de nuevos hilos)</span></div>' +
-    '<div id="fc-fav-list">' + buildFavoriteRows(favUsers) + '</div>' +
-    addFavBtn +
+  // — Fila: debug
+  var debugRow =
+    '<div style="padding:8px 0;">' +
+    '<button onclick="fcTestNotifications()" style="width:100%;background:none;border:1px solid #2a2a2a;' +
+    'color:#444;border-radius:4px;padding:4px;font-size:11px;cursor:pointer;" id="fc-test-btn">' +
+    '🧪 Simular notificación</button>' +
     '</div>';
+
+  panel.innerHTML = hiddenRow + ignoredRow + favRow + kwRow + debugRow;
 
   document.body.appendChild(overlay);
   document.body.appendChild(panel);
 
-  function openPanel() {
-    overlay.style.display = 'block';
-    panel.style.display = 'block';
-  }
-
-  function closePanel() {
-    overlay.style.display = 'none';
-    panel.style.display = 'none';
-  }
+  function openPanel() { overlay.style.display = 'block'; panel.style.display = 'block'; }
+  function closePanel() { overlay.style.display = 'none'; panel.style.display = 'none'; }
 
   window.fcToggleSettings = function() {
     if (panel.style.display === 'none') openPanel(); else closePanel();
   };
+
+  window.fcToggleSection = function(id) { toggle(id); };
 
   window.fcRemoveUser = function(username) {
     Android.removeIgnoredUser(username);
     var el = panel.querySelector('[data-user="' + escAttr(username) + '"]');
     if (el) el.remove();
     var remaining = panel.querySelectorAll('[data-user]').length;
-    if (remaining === 0) {
+    if (remaining === 0)
       document.getElementById('fc-ignored-list').innerHTML =
-        '<div style="color:#666;font-size:12px;padding:4px 0;">No hay usuarios ignorados</div>';
-    }
-    var meta = document.getElementById('fc-meta');
-    if (meta) meta.textContent = 'Actualizado: ' + timeAgo(Android.getLastUpdatedMs()) + ' · ' + remaining + ' ignorados';
+        '<div style="color:#555;font-size:12px;padding:6px 0;">Sin usuarios ignorados</div>';
+    var cnt = document.getElementById('fc-ignored-count');
+    if (cnt) cnt.textContent = remaining;
   };
 
   window.fcRefresh = function() {
     var btn = document.getElementById('fc-refresh-btn');
-    if (btn) { btn.textContent = '↻ ...'; btn.disabled = true; }
+    if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
     window.fcOnRefreshDone = function() {
       window.fcOnRefreshDone = null;
       var users = JSON.parse(Android.getIgnoredUsersJson());
       var list = document.getElementById('fc-ignored-list');
       if (list) list.innerHTML = buildUserRows(users);
-      var meta = document.getElementById('fc-meta');
-      if (meta) meta.textContent = 'Actualizado: ' + timeAgo(Android.getLastUpdatedMs()) + ' · ' + users.length + ' ignorados';
-      if (btn) { btn.textContent = '↻ Actualizar'; btn.disabled = false; }
+      var cnt = document.getElementById('fc-ignored-count');
+      if (cnt) cnt.textContent = users.length;
+      if (btn) { btn.textContent = '↻'; btn.disabled = false; }
     };
     Android.triggerRefresh();
   };
@@ -230,6 +249,8 @@
     var kws = JSON.parse(Android.getKeywordsJson());
     var list = document.getElementById('fc-kw-list');
     if (list) list.innerHTML = buildKeywordRows(kws);
+    var cnt = document.getElementById('fc-kw-count');
+    if (cnt) cnt.textContent = kws.length + ' palabras';
   };
 
   window.fcAddKeyword = function() {
@@ -239,6 +260,8 @@
     var kws = JSON.parse(Android.getKeywordsJson());
     var list = document.getElementById('fc-kw-list');
     if (list) list.innerHTML = buildKeywordRows(kws);
+    var cnt = document.getElementById('fc-kw-count');
+    if (cnt) cnt.textContent = kws.length + ' palabras';
     input.value = '';
   };
 
@@ -247,6 +270,8 @@
     var kws = JSON.parse(Android.getKeywordsJson());
     var list = document.getElementById('fc-kw-list');
     if (list) list.innerHTML = buildKeywordRows(kws);
+    var cnt = document.getElementById('fc-kw-count');
+    if (cnt) cnt.textContent = kws.length + ' palabras';
   };
 
   window.fcTestNotifications = function() {
@@ -254,7 +279,7 @@
     if (btn) { btn.textContent = '⏳ Lanzado — pon la app en background'; btn.disabled = true; }
     Android.testNotifications();
     setTimeout(function() {
-      if (btn) { btn.textContent = 'Simular notificación (resetea contadores + lanza worker)'; btn.disabled = false; }
+      if (btn) { btn.textContent = '🧪 Simular notificación'; btn.disabled = false; }
     }, 5000);
   };
 
@@ -263,6 +288,8 @@
     var favs = JSON.parse(Android.getFavoriteUsersJson());
     var list = document.getElementById('fc-fav-list');
     if (list) list.innerHTML = buildFavoriteRows(favs);
+    var cnt = document.getElementById('fc-fav-count');
+    if (cnt) cnt.textContent = favs.length;
   };
 
   window.fcAddCurrentFavorite = function() {
@@ -272,11 +299,13 @@
     var favs = JSON.parse(Android.getFavoriteUsersJson());
     var list = document.getElementById('fc-fav-list');
     if (list) list.innerHTML = buildFavoriteRows(favs);
+    var cnt = document.getElementById('fc-fav-count');
+    if (cnt) cnt.textContent = favs.length;
     var btn = document.getElementById('fc-add-fav-btn');
     if (btn) { btn.textContent = '✓ Añadido'; btn.disabled = true; }
   };
 
-  // Fixed floating button (FAB) — always bottom-right, independent of page structure
+  // FAB
   var fab = document.createElement('button');
   fab.id = 'fc-gear-btn';
   fab.onclick = window.fcToggleSettings;
