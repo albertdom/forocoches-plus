@@ -57,7 +57,8 @@ class NotificationWorker(
                 NotificationHelper.ID_PM,
                 "FC+ Mensajes Privados",
                 "Tienes $diff nuevo${if (diff == 1) "" else "s"} mensaje${if (diff == 1) "" else "s"} privado${if (diff == 1) "" else "s"}",
-                pmCount
+                pmCount,
+                "https://forocoches.com/foro/private.php"
             )
         }
         repo.setLastPmCount(pmCount)

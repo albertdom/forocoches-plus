@@ -23,9 +23,10 @@ object NotificationHelper {
         }
     }
 
-    fun show(context: Context, id: Int, title: String, text: String, badgeCount: Int = 0) {
+    fun show(context: Context, id: Int, title: String, text: String, badgeCount: Int = 0, url: String = "") {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            if (url.isNotEmpty()) putExtra("url", url)
         }
         val pendingIntent = PendingIntent.getActivity(
             context, id, intent,

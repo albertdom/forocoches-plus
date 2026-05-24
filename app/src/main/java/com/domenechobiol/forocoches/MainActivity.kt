@@ -33,7 +33,8 @@ class MainActivity : AppCompatActivity() {
         webView = findViewById(R.id.webview)
         configureWebView()
         configureSwipeRefresh()
-        webView.loadUrl("https://forocoches.com/foro/")
+        val startUrl = intent.getStringExtra("url") ?: "https://forocoches.com/foro/"
+        webView.loadUrl(startUrl)
         fetchIgnoreListIfNeeded()
         requestNotificationPermission()
         startNotificationPolling()
@@ -120,7 +121,8 @@ class MainActivity : AppCompatActivity() {
                                 NotificationHelper.ID_PM,
                                 "FC+ Mensajes Privados",
                                 "Tienes $diff nuevo${if (diff == 1) "" else "s"} mensaje${if (diff == 1) "" else "s"} privado${if (diff == 1) "" else "s"}",
-                                pmCount
+                                pmCount,
+                                "https://forocoches.com/foro/private.php"
                             )
                         }
                         notifRepo.setLastPmCount(pmCount)
@@ -151,6 +153,12 @@ class MainActivity : AppCompatActivity() {
         ) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        val url = intent.getStringExtra("url") ?: return
+        webView.loadUrl(url)
     }
 
     @Deprecated("Needed for API < 33")
