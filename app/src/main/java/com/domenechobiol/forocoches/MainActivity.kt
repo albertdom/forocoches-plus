@@ -4,6 +4,9 @@ import android.os.Bundle
 import android.webkit.CookieManager
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -17,6 +20,7 @@ class MainActivity : AppCompatActivity() {
         webView = findViewById(R.id.webview)
         configureWebView()
         webView.loadUrl("https://forocoches.com/foro/")
+        fetchIgnoreListIfNeeded()
     }
 
     private fun configureWebView() {
@@ -35,6 +39,20 @@ class MainActivity : AppCompatActivity() {
         }
         repo = IgnoreListRepository(this)
         webView.webViewClient = ForocochesWebViewClient(this, repo)
+    }
+
+    private fun fetchIgnoreListIfNeeded() {
+        if (repo.getLastUpdated() != 0L) return
+        lifecycleScope.launch {
+            delay(3_000)
+            val cookie = CookieManager.getInstance().getCookie("https://forocoches.com")
+                ?: return@launch
+            if (cookie.isBlank()) return@launch
+            try {
+                val users = IgnoreListFetcher().fetch(cookie)
+                if (users.isNotEmpty()) repo.setIgnoredUsers(users)
+            } catch (_: Exception) { }
+        }
     }
 
     @Deprecated("Needed for API < 33")
