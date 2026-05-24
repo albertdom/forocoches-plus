@@ -58,14 +58,13 @@ class ForocochesWebViewClient(
     private fun injectGlobals(view: WebView) {
         val users = repo.getIgnoredUsers()
         val usersJson = users.joinToString(",") { "\"${it.replace("\"", "\\\"")}\"" }
-        val hideMode = repo.getHideMode()
 
         val keywordsEnabled = keywordRepo.isEnabled()
         val keywords = keywordRepo.getKeywords()
         val keywordsJson = keywords.joinToString(",") { "\"${it.replace("\"", "\\\"")}\"" }
 
         view.evaluateJavascript(
-            """window._fcIgnoredUsers=[$usersJson];window._fcHideMode="$hideMode";""" +
+            """window._fcIgnoredUsers=[$usersJson];""" +
             """window._fcKeywordsEnabled=$keywordsEnabled;window._fcKeywords=[$keywordsJson];""",
             null
         )

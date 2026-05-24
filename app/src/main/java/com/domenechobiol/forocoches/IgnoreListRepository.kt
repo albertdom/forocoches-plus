@@ -17,10 +17,4 @@ class IgnoreListRepository(context: Context) {
     }
 
     fun getLastUpdated(): Long = prefs.getLong("last_updated", 0L)
-
-    fun getHideMode(): String = prefs.getString("hide_mode", "message") ?: "message"
-
-    fun setHideMode(mode: String) {
-        prefs.edit().putString("hide_mode", mode).apply()
-    }
 }

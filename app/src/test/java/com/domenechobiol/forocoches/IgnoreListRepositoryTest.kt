@@ -33,17 +33,6 @@ class IgnoreListRepositoryTest {
     }
 
     @Test
-    fun `getHideMode devuelve message por defecto`() {
-        assertEquals("message", repo.getHideMode())
-    }
-
-    @Test
-    fun `setHideMode persiste el valor`() {
-        repo.setHideMode("complete")
-        assertEquals("complete", repo.getHideMode())
-    }
-
-    @Test
     fun `getLastUpdated devuelve 0 si nunca se actualizó`() {
         assertEquals(0L, repo.getLastUpdated())
     }

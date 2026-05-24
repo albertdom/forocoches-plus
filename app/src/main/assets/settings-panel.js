@@ -2,7 +2,6 @@
   if (typeof Android === 'undefined') return;
   if (document.getElementById('fc-settings-overlay')) return;
 
-  var hideMode = Android.getHideMode();
   var ignoredUsers = JSON.parse(Android.getIgnoredUsersJson());
   var lastUpdated = Android.getLastUpdatedMs();
   var favUsers = JSON.parse(Android.getFavoriteUsersJson());
@@ -106,7 +105,6 @@
            '</span></label>';
   }
 
-  var isChecked = hideMode === 'complete';
   var profileInfo = getCurrentProfileInfo();
 
   // Overlay (transparente, solo para cerrar al tocar fuera)
@@ -134,13 +132,6 @@
   arrow.style.cssText = 'width:0;height:0;' +
     'border-left:9px solid transparent;border-right:9px solid transparent;' +
     'border-top:9px solid #2a2a2a;margin-left:auto;margin-right:18px;';
-
-  // — Fila: ocultar completamente
-  var hiddenRow =
-    '<div style="' + rowStyle() + '">' +
-    '<span style="color:#ccc;">Ocultar hilos completamente</span>' +
-    toggleSwitch('fc-hide-toggle', 'fc-toggle-track', 'fc-toggle-thumb', isChecked) +
-    '</div>';
 
   // — Fila: ignorados
   var ignoredRow =
@@ -203,7 +194,7 @@
     '🧪 Simular notificación</button>' +
     '</div>';
 
-  panel.innerHTML = hiddenRow + ignoredRow + favRow + kwRow + debugRow;
+  panel.innerHTML = ignoredRow + favRow + kwRow + debugRow;
 
   container.appendChild(panel);
   container.appendChild(arrow);
@@ -245,13 +236,6 @@
     };
     Android.triggerRefresh();
   };
-
-  panel.querySelector('#fc-hide-toggle').addEventListener('change', function() {
-    var mode = this.checked ? 'complete' : 'message';
-    Android.setHideMode(mode);
-    panel.querySelector('#fc-toggle-track').style.background = this.checked ? '#00e5cc' : '#555';
-    panel.querySelector('#fc-toggle-thumb').style.left = this.checked ? '21px' : '3px';
-  });
 
   panel.querySelector('#fc-kw-toggle').addEventListener('change', function() {
     Android.setKeywordFilterEnabled(this.checked);

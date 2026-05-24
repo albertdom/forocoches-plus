@@ -28,27 +28,6 @@ class SettingsBridgeTest {
     }
 
     @Test
-    fun `getHideMode devuelve el valor del repo`() {
-        repo.setHideMode("complete")
-        assertEquals("complete", bridge.getHideMode())
-    }
-
-    @Test
-    fun `setHideMode persiste valores validos`() {
-        bridge.setHideMode("complete")
-        assertEquals("complete", repo.getHideMode())
-        bridge.setHideMode("message")
-        assertEquals("message", repo.getHideMode())
-    }
-
-    @Test
-    fun `setHideMode ignora valores invalidos`() {
-        repo.setHideMode("message")
-        bridge.setHideMode("hack")
-        assertEquals("message", repo.getHideMode())
-    }
-
-    @Test
     fun `getIgnoredUsersJson devuelve JSON array valido`() {
         repo.setIgnoredUsers(listOf("UserUno", "UserDos"))
         val json = bridge.getIgnoredUsersJson()

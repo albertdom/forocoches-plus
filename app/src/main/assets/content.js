@@ -32,53 +32,22 @@
     return a ? a.textContent.trim().toLowerCase() : '';
   }
 
-  function getContentDiv(row) {
-    const a = row.querySelector('a[href*="showthread.php?t="]');
-    if (!a) return null;
-    let el = a;
-    for (let i = 0; i < 3; i++) if (el.parentElement) el = el.parentElement;
-    return el;
-  }
-
-  function hideRow(row, contentDiv, message, hideMode) {
-    if (hideMode === 'complete') {
-      row.style.display = 'none';
-    } else {
-      if (!contentDiv) return;
-      contentDiv.innerHTML =
-        '<div style="padding:12px 0;color:var(--gray-text);font-size:0.875rem;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">' +
-        message +
-        '</div>';
-    }
-  }
-
-  function filterThreads(rows, ignoredSet, hideMode, keywordsEnabled, keywords) {
+  function filterThreads(rows, ignoredSet, keywordsEnabled, keywords) {
     for (const row of rows) {
       const author = getAuthorFromRow(row);
-      if (author && ignoredSet.has(author)) {
-        const contentDiv = getContentDiv(row);
-        hideRow(row, contentDiv,
-          'Este hilo está oculto porque <strong>' + author + '</strong> está en tu lista de ignorados.',
-          hideMode);
-        continue;
-      }
+      if (author && ignoredSet.has(author)) { row.style.display = 'none'; continue; }
       if (keywordsEnabled && keywords.length > 0) {
         const title = getTitleFromRow(row);
-        const matched = keywords.find(k => title.includes(k.toLowerCase()));
-        if (matched) {
-          const contentDiv = getContentDiv(row);
-          hideRow(row, contentDiv, 'Este hilo está oculto por el filtro de contenido.', hideMode);
-        }
+        if (keywords.find(k => title.includes(k))) row.style.display = 'none';
       }
     }
   }
 
   const ignoredSet = new Set(window._fcIgnoredUsers || []);
-  const hideMode = window._fcHideMode || 'message';
   const keywordsEnabled = window._fcKeywordsEnabled !== false;
   const keywords = (window._fcKeywords || []).map(k => k.toLowerCase());
 
-  filterThreads(getThreadRows(), ignoredSet, hideMode, keywordsEnabled, keywords);
+  filterThreads(getThreadRows(), ignoredSet, keywordsEnabled, keywords);
 
   const observer = new MutationObserver(function (mutations) {
     const newRows = [];
@@ -93,7 +62,7 @@
         }
       }
     }
-    if (newRows.length > 0) filterThreads(newRows, ignoredSet, hideMode, keywordsEnabled, keywords);
+    if (newRows.length > 0) filterThreads(newRows, ignoredSet, keywordsEnabled, keywords);
   });
 
   observer.observe(document.body, { childList: true, subtree: true });

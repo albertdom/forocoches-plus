@@ -25,10 +25,10 @@ class IgnoreListFetcher {
 
     fun parseIgnoreList(html: String): List<String> {
         val usernames = mutableListOf<String>()
-        val liRegex = Regex("""<li[^>]+id="user\d+"[\s\S]*?</li>""", RegexOption.IGNORE_CASE)
-        val aRegex = Regex("""href="member\.php\?u=\d+"[^>]*>\s*([\s\S]*?)\s*</a>""", RegexOption.IGNORE_CASE)
-        for (liMatch in liRegex.findAll(html)) {
-            val aMatch = aRegex.find(liMatch.value)
+        val divRegex = Regex("""<div[^>]+id="user\d+"[^>]*>([\s\S]*?)</div>""", RegexOption.IGNORE_CASE)
+        val aRegex = Regex("""href="member\.php\?u=\d+"[^>]*>([^<]+)</a>""", RegexOption.IGNORE_CASE)
+        for (divMatch in divRegex.findAll(html)) {
+            val aMatch = aRegex.find(divMatch.value)
             if (aMatch != null) usernames.add(aMatch.groupValues[1].trim())
         }
         return usernames

@@ -17,14 +17,6 @@ class SettingsBridge(
 ) {
 
     @JavascriptInterface
-    fun getHideMode(): String = repo.getHideMode()
-
-    @JavascriptInterface
-    fun setHideMode(mode: String) {
-        if (mode == "complete" || mode == "message") repo.setHideMode(mode)
-    }
-
-    @JavascriptInterface
     fun getIgnoredUsersJson(): String {
         val users = repo.getIgnoredUsers()
         if (users.isEmpty()) return "[]"
