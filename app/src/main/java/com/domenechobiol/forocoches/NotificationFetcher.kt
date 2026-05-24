@@ -11,13 +11,13 @@ class NotificationFetcher {
         private const val BASE_URL = "https://forocoches.com/foro"
         private const val USER_AGENT = "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
 
-        // FC usa class='user-notifications-count-wrapper' (comillas simples) para PMs y notificaciones
-        private val PM_BADGE = Regex("""href="private\.php"[\s\S]{0,500}?class=['"]user-notifications-count-wrapper['"][^>]*>\s*(\d+)""", RegexOption.IGNORE_CASE)
-        private val PM_PARENS = Regex("""href="private\.php"[\s\S]{0,500}?\((\d+)\s*nuevo""", RegexOption.IGNORE_CASE)
+        // FC usa <span class="user-notifications">N</span> dentro del menú de cabecera
+        private val PM_BADGE = Regex("""href="private\.php"[\s\S]{0,600}?<span class="user-notifications">(\d+)</span>""", RegexOption.IGNORE_CASE)
+        private val PM_PARENS = Regex("""href="private\.php"[\s\S]{0,600}?\((\d+)\s*nuevo""", RegexOption.IGNORE_CASE)
 
-        // Notificaciones generales — anchored al enlace de menciones (tab=mentions)
-        private val NOTIF_BADGE = Regex("""tab=mentions[\s\S]{0,500}?class=['"]user-notifications-count-wrapper['"][^>]*>\s*(\d+)""", RegexOption.IGNORE_CASE)
-        private val NOTIF_BULLET = Regex("""(?:menciones|mentions)[^"']*['"][\s\S]{0,500}?class=['"]user-notifications-count-wrapper['"][^>]*>\s*(\d+)""", RegexOption.IGNORE_CASE)
+        // Notificaciones generales — mismo patrón, anchored al enlace de menciones
+        private val NOTIF_BADGE = Regex("""tab=mentions[\s\S]{0,600}?<span class="user-notifications">(\d+)</span>""", RegexOption.IGNORE_CASE)
+        private val NOTIF_BULLET = Regex("""(?:menciones|mentions)[^"']*['"][\s\S]{0,600}?<span class="user-notifications">(\d+)</span>""", RegexOption.IGNORE_CASE)
 
         // Thread más reciente de un usuario
         private val THREAD_ID = Regex("""showthread\.php\?t=(\d+)""")
