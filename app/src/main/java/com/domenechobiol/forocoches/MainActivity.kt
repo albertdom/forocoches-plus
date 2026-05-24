@@ -1,9 +1,14 @@
 package com.domenechobiol.forocoches
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.webkit.CookieManager
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -21,6 +26,7 @@ class MainActivity : AppCompatActivity() {
         configureWebView()
         webView.loadUrl("https://forocoches.com/foro/")
         fetchIgnoreListIfNeeded()
+        requestNotificationPermission()
     }
 
     private fun configureWebView() {
@@ -39,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         }
         repo = IgnoreListRepository(this)
         webView.webViewClient = ForocochesWebViewClient(this, repo)
-        webView.addJavascriptInterface(SettingsBridge(repo, this), "Android")
+        webView.addJavascriptInterface(SettingsBridge(repo, webView), "Android")
     }
 
     private fun fetchIgnoreListIfNeeded() {
@@ -53,6 +59,15 @@ class MainActivity : AppCompatActivity() {
                 val users = IgnoreListFetcher().fetch(cookie)
                 if (users.isNotEmpty()) repo.setIgnoredUsers(users)
             } catch (_: Exception) { }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
         }
     }
 

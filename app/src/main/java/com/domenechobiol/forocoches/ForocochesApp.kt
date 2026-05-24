@@ -9,13 +9,22 @@ import java.util.concurrent.TimeUnit
 class ForocochesApp : Application() {
     override fun onCreate() {
         super.onCreate()
+
+        NotificationHelper.createChannel(this)
+
         try {
-            val request = PeriodicWorkRequestBuilder<IgnoreListWorker>(30, TimeUnit.MINUTES)
-                .build()
+            val ignoreRequest = PeriodicWorkRequestBuilder<IgnoreListWorker>(30, TimeUnit.MINUTES).build()
             WorkManager.getInstance(this).enqueueUniquePeriodicWork(
                 "ignore-list-refresh",
                 ExistingPeriodicWorkPolicy.KEEP,
-                request
+                ignoreRequest
+            )
+
+            val notifRequest = PeriodicWorkRequestBuilder<NotificationWorker>(15, TimeUnit.MINUTES).build()
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "notification-poll",
+                ExistingPeriodicWorkPolicy.KEEP,
+                notifRequest
             )
         } catch (_: IllegalStateException) {
             // WorkManager not initialized (e.g., in tests)
