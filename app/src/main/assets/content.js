@@ -1,11 +1,12 @@
 (function () {
-  if (typeof Android === 'undefined') return;
+  if (typeof Android === 'undefined') { return; }
 
-  const ignoredSet = new Set(JSON.parse(Android.getIgnoredUsersJson()));
+  const ignoredSet = new Set(JSON.parse(Android.getIgnoredUsersJson()).map(u => u.toLowerCase()));
   const keywordsEnabled = Android.getKeywordFilterEnabled();
   const keywords = JSON.parse(Android.getKeywordsJson()).map(k => k.toLowerCase());
 
   function isThreadPage() { return window.location.href.includes('showthread.php'); }
+
 
   // ── Thread list filtering ────────────────────────────────────────────────
 
@@ -53,26 +54,36 @@
 
   // ── Post filtering (dentro de hilos) ────────────────────────────────────
 
+  function hidePost(post) {
+    var el = post.parentElement || post;
+    el.style.display = 'none';
+  }
+
   function filterPosts(root) {
-    const menus = (root || document).querySelectorAll('div[id^="postmenu_"]');
-    for (const menu of menus) {
-      // Ignorar los sub-menús popup (tienen sufijo _menu)
-      if (menu.id.endsWith('_menu')) continue;
-      const authorEl = menu.querySelector('b > a[href*="member.php"]');
+    const posts = (root || document).querySelectorAll('li[id^="td_post_"]');
+    for (const post of posts) {
+      if (post.textContent.includes('lista de ignorados')) {
+        hidePost(post);
+        continue;
+      }
+      const postId = post.id.replace('td_post_', '');
+      const menu = document.getElementById('postmenu_' + postId);
+      if (!menu) continue;
+      const authorEl = menu.querySelector('a[href*="member.php"]');
       if (!authorEl) continue;
-      const author = authorEl.textContent.trim();
-      if (!ignoredSet.has(author)) continue;
+      const author = authorEl.textContent.trim().toLowerCase();
+      if (ignoredSet.has(author)) hidePost(post);
+    }
 
-      // El wrapper completo del post: div#postlist -> su padre
-      const postList = menu.closest('ol')?.parentElement;
-      const wrapper = postList?.parentElement;
-      if (wrapper) { wrapper.style.display = 'none'; continue; }
-
-      // Fallback: ocultar al menos cabecera y mensaje por separado
-      const postId = menu.id.replace('postmenu_', '');
-      menu.closest('li')?.style && (menu.closest('li').style.display = 'none');
-      const msgEl = document.getElementById('post_message_' + postId);
-      msgEl?.closest('li') && (msgEl.closest('li').style.display = 'none');
+    const quotes = (root || document).querySelectorAll('div.quote');
+    for (const quote of quotes) {
+      const b = quote.querySelector('b');
+      if (!b) continue;
+      if (!ignoredSet.has(b.textContent.trim().toLowerCase())) continue;
+      const msgDiv = quote.closest('[id^="post_message_"]');
+      if (!msgDiv) continue;
+      const wrapper = msgDiv.parentElement?.parentElement;
+      if (wrapper) wrapper.style.display = 'none';
     }
   }
 
