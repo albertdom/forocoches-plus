@@ -3,6 +3,14 @@ name: Tweet on Release
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Versión (ej: v1.0.1)'
+        default: 'v1.0.1'
+      url:
+        description: 'URL del release'
+        default: 'https://github.com/albertd987/forocoches-plus/releases/latest'
 
 jobs:
   tweet:
@@ -19,7 +27,9 @@ jobs:
             accessToken: process.env.TWITTER_ACCESS_TOKEN,
             accessSecret: process.env.TWITTER_ACCESS_SECRET,
           });
-          const text = \`🚀 Forocoches+ ${{ github.event.release.tag_name }} ya disponible\n\nFiltra usuarios, bloquea anuncios y recibe notificaciones de MPs.\n\nDescarga: ${{ github.event.release.html_url }}\n\n#Forocoches #Android\`;
+          const tag = process.env.TAG || '${{ github.event.release.tag_name }}';
+          const url = process.env.URL || '${{ github.event.release.html_url }}';
+          const text = \`🚀 Forocoches+ \${tag} ya disponible\n\nFiltra usuarios, bloquea anuncios y recibe notificaciones de MPs.\n\nDescarga: \${url}\n\n#Forocoches #Android\`;
           client.v2.tweet(text).then(() => console.log('Tweet enviado')).catch(e => { console.error(e); process.exit(1); });
           "
         env:
@@ -27,3 +37,5 @@ jobs:
           TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
           TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
           TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+          TAG: ${{ github.event.inputs.tag }}
+          URL: ${{ github.event.inputs.url }}
