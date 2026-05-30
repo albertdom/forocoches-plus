@@ -1,6 +1,10 @@
 # Forocoches+
 
+[![GitHub release](https://img.shields.io/github/v/release/albertd987/forocoches-plus)](https://github.com/albertd987/forocoches-plus/releases/latest)
+
 App Android no oficial para Forocoches que mejora la experiencia del foro con filtros, notificaciones y otras utilidades.
+
+> **[⬇ Descargar APK](https://github.com/albertd987/forocoches-plus/releases/latest/download/forocoches-plus-v1.0.0.apk)**
 
 ## Capturas
 
