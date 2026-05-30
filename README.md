@@ -1,11 +1,11 @@
 # Forocoches+
 
-[![GitHub release](https://img.shields.io/github/v/release/albertd987/forocoches-plus)](https://github.com/albertd987/forocoches-plus/releases/latest)
+[![GitHub release](https://img.shields.io/github/v/release/neonforger/forolibre)](https://github.com/neonforger/forolibre/releases/latest)
 [![Twitter](https://img.shields.io/badge/Twitter-@ForocochesPlus__-1DA1F2?logo=x)](https://x.com/ForocochesPlus_)
 
 App Android no oficial para Forocoches que mejora la experiencia del foro con filtros, notificaciones y otras utilidades.
 
-> **[Descargar APK](https://github.com/albertd987/forocoches-plus/releases/latest)**
+> **[Descargar APK](https://github.com/neonforger/forolibre/releases/latest)**
 
 ## Capturas
 
