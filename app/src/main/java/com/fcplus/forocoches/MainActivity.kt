@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         }
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
-            setAcceptThirdPartyCookies(webView, true)
+            setAcceptThirdPartyCookies(webView, false)
         }
         repo = IgnoreListRepository(this)
         val notifRepo = NotificationRepository(this)
