@@ -11,6 +11,24 @@ def keystoreProps = new Properties()
 if (keystorePropsFile.exists()) {
     keystoreProps.load(new FileInputStream(keystorePropsFile))
 }
+def releaseStoreFile = file(keystoreProps['storeFile'] ?: '../release.keystore')
+def releaseSigningReady = keystorePropsFile.exists() &&
+    releaseStoreFile.exists() &&
+    ['storePassword', 'keyAlias', 'keyPassword'].every { key ->
+        keystoreProps[key]?.toString()?.trim()
+    }
+
+gradle.taskGraph.whenReady { graph ->
+    def releaseRequested = graph.allTasks.any { task ->
+        task.name.toLowerCase(java.util.Locale.ROOT).contains('release')
+    }
+    if (releaseRequested && !releaseSigningReady) {
+        throw new GradleException(
+            'Release builds require keystore.properties with storePassword, keyAlias, ' +
+                'keyPassword and a valid storeFile. Use assembleDebug for unsigned local builds.'
+        )
+    }
+}
 
 android {
     namespace 'com.fcplus.forocoches'
@@ -27,8 +45,8 @@ android {
 
     signingConfigs {
         release {
-            if (keystorePropsFile.exists()) {
-                storeFile file(keystoreProps['storeFile'] ?: '../release.keystore')
+            if (releaseSigningReady) {
+                storeFile releaseStoreFile
                 storePassword keystoreProps['storePassword']
                 keyAlias keystoreProps['keyAlias']
                 keyPassword keystoreProps['keyPassword']
@@ -40,8 +58,8 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // Solo firma si hay credenciales; si no, release queda sin firmar (clones del repo).
-            signingConfig keystorePropsFile.exists() ? signingConfigs.release : null
+            // Los builds release fallan arriba si no hay credenciales de firma completas.
+            signingConfig releaseSigningReady ? signingConfigs.release : null
         }
     }
 

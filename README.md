@@ -69,6 +69,8 @@ App Android no oficial para Forocoches que mejora la experiencia del foro con fi
 
 ## Build
 
+Requiere JDK 17 o superior para el Android Gradle Plugin.
+
 ```bash
 # Debug
 ./gradlew assembleDebug
