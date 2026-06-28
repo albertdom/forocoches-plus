@@ -3,11 +3,8 @@ package com.fcplus.forocoches
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
-import android.provider.Settings
 import android.view.MotionEvent
 import android.webkit.CookieManager
 import android.webkit.WebView
@@ -41,7 +38,6 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl(startUrl)
         fetchIgnoreListIfNeeded()
         requestNotificationPermission()
-        requestBatteryExemption()
         startNotificationPolling()
         if (NotificationRepository(this).isInstantEnabled()) NotificationService.start(this)
     }
@@ -120,28 +116,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 delay(60_000)
             }
-        }
-    }
-
-    /**
-     * Pide eximir la app de la optimización de batería. Sin esto, Samsung/Xiaomi/etc.
-     * "duermen" la app y matan el NotificationWorker de fondo. Solo pregunta si aún no
-     * está exenta.
-     */
-    private fun requestBatteryExemption() {
-        val pm = getSystemService(PowerManager::class.java) ?: return
-        if (pm.isIgnoringBatteryOptimizations(packageName)) return
-        try {
-            startActivity(
-                Intent(
-                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:$packageName")
-                )
-            )
-        } catch (_: Exception) {
-            try {
-                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-            } catch (_: Exception) { }
         }
     }
 
