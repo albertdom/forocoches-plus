@@ -11,6 +11,9 @@ import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlinx.coroutines.delay
@@ -32,6 +35,7 @@ class MainActivity : AppCompatActivity() {
 
         swipeRefresh = findViewById(R.id.swipe_refresh)
         webView = findViewById(R.id.webview)
+        applyWindowInsets()
         configureWebView()
         configureSwipeRefresh()
         val startUrl = TrustedOrigins.trustedUrlOrDefault(intent.getStringExtra("url"))
@@ -40,6 +44,25 @@ class MainActivity : AppCompatActivity() {
         requestNotificationPermission()
         startNotificationPolling()
         if (NotificationRepository(this).isInstantEnabled()) NotificationService.start(this)
+    }
+
+    /**
+     * Android 15 (targetSdk 35) fuerza dibujar edge-to-edge: el contenido pasaria por
+     * debajo de la barra de estado y de la de navegacion. Empujamos el WebView a la zona
+     * segura aplicando los insets como padding, y pintamos esas franjas de blanco para
+     * que combinen con la cabecera de FC. En Android <15 los insets llegan a 0 = inocuo.
+     */
+    private fun applyWindowInsets() {
+        swipeRefresh.setBackgroundColor(android.graphics.Color.WHITE)
+        ViewCompat.setOnApplyWindowInsetsListener(swipeRefresh) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            insets
+        }
+        WindowInsetsControllerCompat(window, swipeRefresh).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
+        }
     }
 
     private fun configureWebView() {
