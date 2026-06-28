@@ -45,10 +45,6 @@ class NotificationService : Service() {
         val repo = NotificationRepository(applicationContext)
         while (scope.isActive) {
             val cookie = CookieManager.getInstance().getCookie("https://forocoches.com")
-            android.util.Log.d(
-                "FC_NOTIF",
-                "service poll, cookie=${if (cookie.isNullOrBlank()) "NULL/BLANK" else "OK(${cookie.length})"}"
-            )
             if (!cookie.isNullOrBlank()) {
                 try {
                     NotificationChecker.check(applicationContext, cookie)

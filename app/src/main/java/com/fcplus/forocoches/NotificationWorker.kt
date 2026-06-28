@@ -12,10 +12,6 @@ class NotificationWorker(
 
     override suspend fun doWork(): Result {
         val cookie = CookieManager.getInstance().getCookie("https://forocoches.com")
-        android.util.Log.d(
-            "FC_NOTIF",
-            "worker background run, cookie=${if (cookie.isNullOrBlank()) "NULL/BLANK" else "OK(${cookie.length})"}"
-        )
         if (cookie.isNullOrBlank()) return Result.success()
 
         return try {

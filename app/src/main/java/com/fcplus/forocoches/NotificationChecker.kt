@@ -27,10 +27,6 @@ object NotificationChecker {
         val lastPm = repo.getLastPmCount()
         if (lastPm in 0 until counts.pm) {
             val preview = runCatching { fetcher.fetchLatestPm(cookie) }.getOrNull()
-            android.util.Log.d(
-                "FC_NOTIF",
-                "PM nuevo: pm=${counts.pm} lastPm=$lastPm preview=${if (preview == null) "NULL(fallback)" else "sender='${preview.sender}' snippet='${preview.snippet.take(40)}'"}"
-            )
             if (preview != null) {
                 // Estilo chat (WhatsApp): remitente + mensaje.
                 NotificationHelper.showPm(

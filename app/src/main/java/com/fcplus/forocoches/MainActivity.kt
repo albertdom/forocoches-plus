@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         webView = findViewById(R.id.webview)
         configureWebView()
         configureSwipeRefresh()
-        val startUrl = intent.getStringExtra("url") ?: "https://forocoches.com/foro/"
+        val startUrl = TrustedOrigins.trustedUrlOrDefault(intent.getStringExtra("url"))
         webView.loadUrl(startUrl)
         fetchIgnoreListIfNeeded()
         requestNotificationPermission()
@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
-        val url = intent.getStringExtra("url") ?: return
+        val url = TrustedOrigins.trustedUrlOrDefault(intent.getStringExtra("url"))
         webView.loadUrl(url)
     }
 

@@ -1,6 +1,8 @@
 package com.fcplus.forocoches
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -37,7 +39,20 @@ class ForocochesWebViewClient(
         return null
     }
 
+    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+        val targetUrl = request.url?.toString() ?: return true
+        if (TrustedOrigins.isTrustedForocochesUrl(targetUrl)) return false
+        if (request.isForMainFrame && TrustedOrigins.isHttpOrHttps(targetUrl)) {
+            openExternal(targetUrl)
+        }
+        return true
+    }
+
     override fun onPageFinished(view: WebView, url: String) {
+        if (!TrustedOrigins.isTrustedForocochesUrl(url)) {
+            onPageLoad?.invoke()
+            return
+        }
         injectCss(view, adblockCss)
         // Config de selectores (remota o bundleada) ANTES de content.js, que la lee.
         view.evaluateJavascript("window.FC_CONFIG=${RemoteConfig.cachedJson(context)};", null)
@@ -56,6 +71,16 @@ class ForocochesWebViewClient(
             """(function(){var s=document.createElement('style');s.textContent="$escaped";document.head&&document.head.appendChild(s);})();""",
             null
         )
+    }
+
+    private fun openExternal(url: String) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                addCategory(Intent.CATEGORY_BROWSABLE)
+            }
+            context.startActivity(intent)
+        } catch (_: Exception) {
+        }
     }
 
 }
