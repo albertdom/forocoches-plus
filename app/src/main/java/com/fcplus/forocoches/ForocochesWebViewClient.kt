@@ -40,9 +40,13 @@ class ForocochesWebViewClient(
     }
 
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-        val targetUrl = request.url?.toString() ?: return true
+        val targetUrl = request.url?.toString() ?: return false
+        // Solo gobernamos la navegacion del frame principal. Los iframes (embeds de
+        // Instagram, YouTube, Twitter...) se cargan con normalidad: corren en su propio
+        // origen, sin la sesion ni los scripts de FC, asi que no son un riesgo.
+        if (!request.isForMainFrame) return false
         if (TrustedOrigins.isTrustedForocochesUrl(targetUrl)) return false
-        if (request.isForMainFrame && TrustedOrigins.isHttpOrHttps(targetUrl)) {
+        if (TrustedOrigins.isHttpOrHttps(targetUrl)) {
             openExternal(targetUrl)
         }
         return true
