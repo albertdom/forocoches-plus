@@ -48,6 +48,9 @@ echo location of your Java installation.
 
 goto fail
 
+:fail
+exit /b 1
+
 :execute
 @rem Setup the command line
 
@@ -57,7 +60,7 @@ set CLASSPATH=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
 "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %*
 
 :end
-@endlocal & set ERROR_CODE=%ERRORCODE%
+@endlocal & set ERROR_CODE=%ERRORLEVEL%
 
 if not "%CONSOLE_MODE%"=="" (
     exit /b %ERROR_CODE%
